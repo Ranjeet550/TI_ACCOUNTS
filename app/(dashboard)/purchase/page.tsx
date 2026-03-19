@@ -52,27 +52,29 @@ export default function PurchasePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Stats Section */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-white">
-        <div className="flex gap-12">
+      {/* Header Section */}
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex justify-between items-center">
           <div>
-            <p className="text-xs text-gray-600 font-medium">Purchase</p>
-            <p className="text-lg font-semibold text-gray-900">₹ 15,00,000.54</p>
-            <p className="text-xs text-gray-500 mt-1">Showing data for This Year</p>
+            <h1 className="text-lg font-semibold text-gray-900">Purchase Transactions</h1>
+            <p className="text-sm text-gray-500">Manage your purchase transactions</p>
           </div>
-          <div>
-            <p className="text-xs text-gray-600 font-medium">Taxable Value</p>
-            <p className="text-lg font-semibold text-gray-900">₹ 12,71,186.89</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 font-medium">Input GST</p>
-            <p className="text-lg font-semibold text-gray-900">₹ 2,28,813.64</p>
+          <div className="flex gap-2">
+            <select className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700">
+              <option>This Year</option>
+              <option>This Month</option>
+              <option>Last Month</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700 flex items-center gap-1">
+              <span>+</span>
+              Purchase
+            </button>
           </div>
         </div>
       </div>
 
       {/* Tabs and Controls Section */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-white flex justify-between items-center">
+      <div className="px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center">
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab("all")}
@@ -105,46 +107,34 @@ export default function PurchasePage() {
             Cancelled
           </button>
         </nav>
-        
-        <div className="flex gap-2">
-          <select className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700">
-            <option>This Year</option>
-            <option>This Month</option>
-            <option>Last Month</option>
-          </select>
-          <button className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700 flex items-center gap-1">
-            <span>+</span>
-            Purchase
-          </button>
-        </div>
       </div>
 
       {/* Purchase Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Bill #</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Ref #</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Vendor Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Value</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600">Payment</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Date</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Bill #</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Ref #</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Vendor Name</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Value</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-900">Payment</th>
             </tr>
           </thead>
           <tbody>
             {purchaseData.map((purchase, index) => (
               <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-6 py-3 text-gray-900">{purchase.date}</td>
-                <td className="px-6 py-3">
-                  <Link href={`/pages/purchase/invoice/${index + 1}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{purchase.date}</td>
+                <td className="px-3 py-2 border-r border-gray-200">
+                  <Link href={`/purchase/invoice/${index + 1}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
                     {purchase.billNo}
                   </Link>
                 </td>
-                <td className="px-6 py-3 text-gray-900">{purchase.refNo}</td>
-                <td className="px-6 py-3 text-gray-900">{purchase.vendorName}</td>
-                <td className="px-6 py-3 text-gray-900 text-right">{purchase.value}</td>
-                <td className="px-6 py-3 text-gray-900">{purchase.payment}</td>
+                <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{purchase.refNo}</td>
+                <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{purchase.vendorName}</td>
+                <td className="px-3 py-2 text-gray-900 font-medium border-r border-gray-200 text-right">{purchase.value}</td>
+                <td className="px-3 py-2 text-gray-900">{purchase.payment}</td>
               </tr>
             ))}
           </tbody>
@@ -152,8 +142,15 @@ export default function PurchasePage() {
       </div>
 
       {/* Pagination Section */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-white flex justify-end">
+      <div className="px-4 py-4 border-t border-gray-200 bg-white flex justify-end">
         <div className="flex items-center gap-1">
+          <button 
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
           {[1, 2, 3, 4, 5].map((page) => (
             <button
               key={page}
@@ -167,6 +164,13 @@ export default function PurchasePage() {
               {page}
             </button>
           ))}
+          <button 
+            onClick={() => setCurrentPage(Math.min(5, currentPage + 1))}
+            className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={currentPage === 5}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

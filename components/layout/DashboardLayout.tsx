@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import Breadcrumb from "@/components/common/Breadcrumb";
 import { cn } from "@/lib/utils";
 import { useRequireAuth } from "@/providers/AuthProvider";
 
@@ -82,6 +83,7 @@ export default function DashboardLayout({
       {/* Main content area with header and scrollable content */}
       <div className="flex flex-col flex-1 w-full min-w-0">
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        <Breadcrumb />
         <main className={cn("px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8 py-2 xs:py-3 sm:py-4 flex-1 overflow-y-auto", className)}>
           {children}
         </main>

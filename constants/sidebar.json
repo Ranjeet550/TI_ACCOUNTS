@@ -3,26 +3,24 @@
     {
       "title": "Dashboard",
       "icon": "/images/common/sidebar/dashboard.png",
-      "path": "/pages/dashboard",
+      "path": "/dashboard",
       "userTypes": ["admin", "seller", "customer"],
       "topLevel": true
     },
     {
       "title": "Sales",
       "icon": "/images/common/sidebar/orders.png",
-      "path": "/pages/sales",
+      "path": "/sales",
       "userTypes": ["admin", "seller", "customer"],
       "topLevel": true
     },
     {
       "title": "Purchase",
       "icon": "/images/common/sidebar/pickup.png",
-      "path": "/pages/purchase",
+      "path": "/purchase",
       "userTypes": ["admin", "seller", "customer"],
       "topLevel": true
-    }
-  ],
-  "others": [
+    },
     {
       "title": "Settings",
       "icon": "/images/common/sidebar/settings.png",

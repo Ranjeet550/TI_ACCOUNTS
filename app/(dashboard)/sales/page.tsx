@@ -146,7 +146,7 @@ export default function SalesPage() {
               <option>Last Month</option>
             </select>
             <Link 
-              href="/pages/sales/create" 
+              href="/sales/create" 
               className="bg-blue-600 text-white px-3 py-1.5 text-sm rounded hover:bg-blue-700 flex items-center gap-1"
             >
               <span>+</span>
@@ -224,7 +224,7 @@ export default function SalesPage() {
               <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                 <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{transaction.date}</td>
                 <td className="px-3 py-2 border-r border-gray-200">
-                  <Link href={`/pages/sales/invoice/${index + 1}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                  <Link href={`/sales/invoice/${index + 1}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
                     {transaction.invoiceNo}
                   </Link>
                 </td>

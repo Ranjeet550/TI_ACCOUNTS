@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedUser = getCurrentUser();
     if (storedUser) {
       setUser(storedUser);
-      const dashboardRoute = userType === "admin" ? "/pages/admin" : "/pages/dashboard";
+      const dashboardRoute = userType === "admin" ? "/admin" : "/dashboard";
       router.replace(dashboardRoute);
     }
   };
