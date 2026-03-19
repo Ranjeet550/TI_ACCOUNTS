@@ -13,7 +13,7 @@ export default function HomePage() {
     if (!loading) {
       const authToken = getAuthToken();
       if (authToken) {
-        router.replace("/pages/dashboard");
+        router.replace("/dashboard");
       } else {
         router.replace("/auth/login");
       }

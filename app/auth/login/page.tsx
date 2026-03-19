@@ -25,7 +25,7 @@ export default function LoginPage() {
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
-      router.replace("/pages/dashboard");
+      router.replace("/dashboard");
     }
   }, [router]);
 
@@ -108,7 +108,7 @@ export default function LoginPage() {
           showConfirmButton: false,
           timer: 1500,
         }).then(() => {
-          router.push("/pages/dashboard");
+          router.push("/dashboard");
         });
       }
     } catch (error) {

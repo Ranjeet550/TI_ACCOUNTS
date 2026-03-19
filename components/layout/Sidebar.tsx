@@ -77,7 +77,7 @@ export default function Sidebar({ className, onNavClick }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col w-[200px] bg-white min-h-screen border-r border-gray-200",
+        "flex flex-col w-[200px] bg-white min-h-screen border-r border-gray-line",
         className
       )}
     >
@@ -93,7 +93,7 @@ export default function Sidebar({ className, onNavClick }: SidebarProps) {
       </div>
 
       <nav className="flex-1 py-2 px-2 xs:px-3">
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           {/* Top Level Navigation */}
           {navItems.map((item, index) => {
             const fullPath = item.path;
@@ -107,16 +107,56 @@ export default function Sidebar({ className, onNavClick }: SidebarProps) {
                     href={fullPath}
                     onClick={onNavClick}
                     className={cn(
-                      "flex items-center px-3 xs:px-4 py-3 rounded-lg text-xs xs:text-sm font-medium transition-all whitespace-nowrap",
+                      "flex items-center px-2 xs:px-3 py-2 rounded-md text-xs xs:text-sm font-medium transition-colors whitespace-nowrap",
                       isActive
-                        ? "bg-blue-900 text-white"
-                        : "text-gray-600 hover:bg-gray-100"
+                        ? "bg-blue-00 text-white"
+                        : "text-gray-10 hover:bg-blue-00 hover:text-white"
                     )}
+                    onMouseEnter={(e) => {
+                      const imgElement = e.currentTarget.querySelector("img");
+                      if (imgElement) {
+                        imgElement.style.filter =
+                          "brightness(0) saturate(100%) invert(100%) sepia(19%) saturate(305%) hue-rotate(314deg) brightness(102%) contrast(101%)";
+                      }
+
+                      const svgElement = e.currentTarget.querySelector("svg");
+                      if (svgElement) {
+                        svgElement.setAttribute("stroke", "#FFF7F0");
+                      }
+
+                      e.currentTarget.classList.add("bg-primary", "text-light");
+                      e.currentTarget.classList.remove("text-muted");
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        const imgElement = e.currentTarget.querySelector("img");
+                        if (imgElement) {
+                          imgElement.style.filter =
+                            "brightness(0) saturate(100%) invert(42%) sepia(9%) saturate(111%) hue-rotate(169deg) brightness(94%) contrast(87%)";
+                        }
+
+                        const svgElement = e.currentTarget.querySelector("svg");
+                        if (svgElement) {
+                          svgElement.setAttribute("stroke", "#6B6B6A");
+                        }
+
+                        e.currentTarget.classList.remove(
+                          "bg-primary",
+                          "text-light"
+                        );
+                        e.currentTarget.classList.add("text-muted");
+                      }
+                    }}
                   >
                     <span className="mr-2 xs:mr-3 flex-shrink-0">
                       {renderIcon(item.icon, isActive)}
                     </span>
                     <span className="truncate">{item.title}</span>
+                    {(item as any).badge && (
+                      <span className="ml-auto px-1.5 xs:px-2 py-0.5 rounded text-xs flex-shrink-0">
+                        ({(item as any).badge})
+                      </span>
+                    )}
                   </Link>
                 )}
               </li>
@@ -125,7 +165,7 @@ export default function Sidebar({ className, onNavClick }: SidebarProps) {
 
           {/* break line */}
           <li className="py-3 xs:py-4">
-            <div className="w-full h-[1px] bg-gray-200"></div>
+            <div className="w-full h-[1px] bg-gray-line"></div>
           </li>
 
           {/* Bottom Level Navigation */}
@@ -141,16 +181,56 @@ export default function Sidebar({ className, onNavClick }: SidebarProps) {
                     href={fullPath}
                     onClick={onNavClick}
                     className={cn(
-                      "flex items-center px-3 xs:px-4 py-3 rounded-lg text-xs xs:text-sm font-medium transition-all whitespace-nowrap",
+                      "flex items-center px-2 xs:px-3 py-2 rounded-md text-xs xs:text-sm font-medium transition-colors whitespace-nowrap",
                       isActive
-                        ? "bg-blue-900 text-white"
-                        : "text-gray-600 hover:bg-gray-100"
+                        ? "bg-blue-00 text-white"
+                        : "text-gray-10 hover:bg-blue-00 hover:text-white"
                     )}
+                    onMouseEnter={(e) => {
+                      const imgElement = e.currentTarget.querySelector("img");
+                      if (imgElement) {
+                        imgElement.style.filter =
+                          "brightness(0) saturate(100%) invert(100%) sepia(19%) saturate(305%) hue-rotate(314deg) brightness(102%) contrast(101%)";
+                      }
+
+                      const svgElement = e.currentTarget.querySelector("svg");
+                      if (svgElement) {
+                        svgElement.setAttribute("stroke", "#FFF7F0");
+                      }
+
+                      e.currentTarget.classList.add("bg-primary", "text-light");
+                      e.currentTarget.classList.remove("text-muted");
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        const imgElement = e.currentTarget.querySelector("img");
+                        if (imgElement) {
+                          imgElement.style.filter =
+                            "brightness(0) saturate(100%) invert(42%) sepia(9%) saturate(111%) hue-rotate(169deg) brightness(94%) contrast(87%)";
+                        }
+
+                        const svgElement = e.currentTarget.querySelector("svg");
+                        if (svgElement) {
+                          svgElement.setAttribute("stroke", "#6B6B6A");
+                        }
+
+                        e.currentTarget.classList.remove(
+                          "bg-primary",
+                          "text-light"
+                        );
+                        e.currentTarget.classList.add("text-muted");
+                      }
+                    }}
                   >
                     <span className="mr-2 xs:mr-3 flex-shrink-0">
                       {renderIcon(item.icon, isActive)}
                     </span>
                     <span className="truncate">{item.title}</span>
+                    {(item as any).badge && (
+                      <span className="ml-auto px-1.5 xs:px-2 py-0.5 rounded text-xs flex-shrink-0">
+                        ({(item as any).badge})
+                      </span>
+                    )}
                   </Link>
                 )}
               </li>
