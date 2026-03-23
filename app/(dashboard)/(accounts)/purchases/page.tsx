@@ -30,42 +30,61 @@ interface PurchaseTransaction {
 export default function PurchasePage() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [purchaseData, setPurchaseData] = useState<PurchaseTransaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({ totalPages: 1, totalTransactions: 0 });
   const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
+  const [purchaseData, setPurchaseData] = useState<PurchaseTransaction[]>([]);
 
   useEffect(() => {
     fetchPurchaseData();
   }, [currentPage, activeTab, dateRange]);
 
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedRows(new Set());
+      setSelectAll(false);
+    } else {
+      const allRows = new Set(purchaseData.map((_, index) => index));
+      setSelectedRows(allRows);
+      setSelectAll(true);
+    }
+  };
+
+  const handleSelectRow = (index: number) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedRows(newSelected);
+    setSelectAll(newSelected.size === purchaseData.length);
+  };
+
   const fetchPurchaseData = async () => {
     try {
-      setLoading(true);
+      setInitialLoading(true);
       setError(null);
-
-      const filters = {
+      
+      const response = await accountsService.getPurchaseTransactions({
         page: currentPage,
         limit: 10,
-        ...(dateRange.startDate && { startDate: dateRange.startDate }),
-        ...(dateRange.endDate && { endDate: dateRange.endDate })
-      };
+        startDate: dateRange.startDate || undefined,
+        endDate: dateRange.endDate || undefined,
+      });
 
-      const response = await accountsService.getPurchaseTransactions(filters);
-
-      if (response.success) {
+      if (response.success && response.data.transactions) {
         setPurchaseData(response.data.transactions);
-        setPagination(response.data.pagination);
       } else {
-        setError(response.message || "Failed to fetch purchase data");
+        setPurchaseData([]);
+        setError(response.message || "No purchase data found");
       }
     } catch (err: any) {
-      setError(err.message || "Error fetching purchase transactions");
-      console.error("Error:", err);
+      setError(err.message || "Failed to load purchase data");
+      setPurchaseData([]);
     } finally {
-      setLoading(false);
       setInitialLoading(false);
     }
   };
@@ -106,10 +125,13 @@ export default function PurchasePage() {
               <option value="thisMonth">This Month</option>
               <option value="lastMonth">Last Month</option>
             </select>
-            <button className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700 flex items-center gap-1">
+            <Link 
+              href="/purchases/create" 
+              className="bg-blue-900 text-white px-3 py-1.5 text-sm rounded hover:bg-blue-800 flex items-center gap-1"
+            >
               <span>+</span>
-              Purchase
-            </button>
+              Create Purchase
+            </Link>
           </div>
         </div>
       </div>
@@ -170,97 +192,116 @@ export default function PurchasePage() {
       )}
 
       {/* Purchase Table */}
-      {!initialLoading && !error && (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Invoice #</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Seller Name</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Seller GSTIN</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Purchase Value</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Payment Method</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900">Status</th>
+      <div className="bg-white rounded-lg shadow-sm">
+        <div className="overflow-x-auto rounded-lg">
+          <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-100">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Invoice #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Order ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Seller Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Payment Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {purchaseData.map((purchase, index) => (
+                <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors last:border-b-0">
+                  <td className="px-4 py-3 text-gray-900">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.has(index)}
+                      onChange={() => handleSelectRow(index)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-gray-900">
+                    {new Date(purchase.date).toLocaleDateString("en-IN")}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/purchases/bill/${purchase.id}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
+                      {purchase.invoiceNo}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-gray-900">{purchase.orderId}</td>
+                  <td className="px-4 py-3 text-gray-900">{purchase.sellerName}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium">{purchase.purchaseValue}</td>
+                  <td className="px-4 py-3 text-gray-900">{purchase.paymentStatus}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {purchaseData.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
-                      No purchase transactions found
-                    </td>
-                  </tr>
-                ) : (
-                  purchaseData.map((purchase) => (
-                    <tr key={purchase.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">
-                        {new Date(purchase.date).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="px-3 py-2 border-r border-gray-200">
-                        <Link href={`/purchases/invoice/${purchase.id}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
-                          {purchase.invoiceNo}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">
-                        <div className="text-sm font-medium">{purchase.sellerName}</div>
-                        <div className="text-xs text-gray-500">{purchase.sellerEmail}</div>
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{purchase.sellerGstin}</td>
-                      <td className="px-3 py-2 text-gray-900 font-medium border-r border-gray-200 text-right">{purchase.purchaseValue}</td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{purchase.paymentMethod}</td>
-                      <td className="px-3 py-2 text-gray-900">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          purchase.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          purchase.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          purchase.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {purchase.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Section */}
-          <div className="px-4 py-4 border-t border-gray-200 bg-white flex justify-end">
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 text-xs rounded ${
-                    currentPage === page
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-700 bg-gray-100 hover:bg-gray-200"
-                  }`}
-                >
-                  {page}
-                </button>
               ))}
-              <button 
-                onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
-                className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                disabled={currentPage === pagination.totalPages}
-              >
-                Next
-              </button>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Bottom Section */}
+      <div className="px-4 py-4 border-t border-gray-200">
+        <div className="flex justify-between items-center">
+          {/* Summary Cards */}
+          <div className="flex gap-4">
+            <div className="bg-green-100 px-6 py-2 rounded-lg border-2 border-green-600">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-green-600 font-medium">Total</span>
+                <span className="text-base font-semibold text-green-600">
+                  {purchaseData.length > 0 
+                    ? purchaseData.reduce((sum, p) => {
+                        const value = parseFloat(p.purchaseValue.replace(/[^\d.]/g, '') || '0');
+                        return sum + value;
+                      }, 0).toFixed(2)
+                    : '0.00'
+                  }
+                </span>
+              </div>
+            </div>
+            <div className="bg-red-100 px-6 py-2 rounded-lg border-2 border-red-600">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-red-600 font-medium">Cancelled</span>
+                <span className="text-base font-semibold text-red-600">₹ 0.00</span>
+              </div>
             </div>
           </div>
-        </>
-      )}
+
+          {/* Pagination */}
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            {[1, 2, 3, 4, 5].map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 text-sm rounded ${
+                  currentPage === page
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={() => setCurrentPage(Math.min(5, currentPage + 1))}
+              className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              disabled={currentPage === 5}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

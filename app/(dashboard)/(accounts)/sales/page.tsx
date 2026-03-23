@@ -27,48 +27,71 @@ interface SalesTransaction {
 export default function SalesPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [transactionData, setTransactionData] = useState<SalesTransaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState({ totalValue: 0, cancelledValue: 0, currency: "INR" });
-  const [pagination, setPagination] = useState({ totalPages: 1, totalTransactions: 0 });
   const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
+  const [transactionData, setTransactionData] = useState<SalesTransaction[]>([]);
+  const [pagination, setPagination] = useState({ totalPages: 1 });
 
   useEffect(() => {
     fetchSalesData();
   }, [currentPage, activeTab, dateRange]);
 
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedRows(new Set());
+      setSelectAll(false);
+    } else {
+      const allRows = new Set(transactionData.map((_, index) => index));
+      setSelectedRows(allRows);
+      setSelectAll(true);
+    }
+  };
+
+  const handleSelectRow = (index: number) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedRows(newSelected);
+    setSelectAll(newSelected.size === transactionData.length);
+  };
+
   const fetchSalesData = async () => {
     try {
-      setLoading(true);
+      setInitialLoading(true);
       setError(null);
 
-      const filters = {
+      const response = await accountsService.getSalesTransactions({
         page: currentPage,
         limit: 10,
-        tab: activeTab as "all" | "draft" | "pending" | "cancelled",
-        ...(dateRange.startDate && { startDate: dateRange.startDate }),
-        ...(dateRange.endDate && { endDate: dateRange.endDate })
-      };
+        tab: activeTab as any,
+        startDate: dateRange.startDate || undefined,
+        endDate: dateRange.endDate || undefined,
+      });
 
-      const response = await accountsService.getSalesTransactions(filters);
-
-      if (response.success) {
+      if (response.success && response.data.transactions) {
         setTransactionData(response.data.transactions);
-        setPagination(response.data.pagination);
-        setSummary(response.data.summary);
+        setPagination({
+          totalPages: response.data.pagination.totalPages || 1,
+        });
       } else {
-        setError(response.message || "Failed to fetch sales data");
+        setTransactionData([]);
+        setError(response.message || "No sales data found");
       }
     } catch (err: any) {
-      setError(err.message || "Error fetching sales transactions");
-      console.error("Error:", err);
+      setError(err.message || "Failed to load sales data");
+      setTransactionData([]);
     } finally {
-      setLoading(false);
       setInitialLoading(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen">
@@ -108,7 +131,7 @@ export default function SalesPage() {
             </select>
             <Link 
               href="/sales/create" 
-              className="bg-blue-600 text-white px-3 py-1.5 text-sm rounded hover:bg-blue-700 flex items-center gap-1"
+              className="bg-blue-900 text-white px-3 py-1.5 text-sm rounded hover:bg-blue-800 flex items-center gap-1"
             >
               <span>+</span>
               Create Invoice
@@ -183,119 +206,116 @@ export default function SalesPage() {
       )}
 
       {/* Transaction Table */}
-      {!initialLoading && !error && (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Invoice #</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Ref #</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Buyer Name</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Country</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Airway Bill</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Logistics</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">SB Ref #</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900 border-r border-gray-300">Value</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-900">Payment</th>
+      <div className="bg-white rounded-lg shadow-sm">
+        <div className="overflow-x-auto rounded-lg">
+          <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-100">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Invoice #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Ref #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Buyer Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Country</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Airway Bill</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Logistics</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">SB Ref #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactionData.map((transaction, index) => (
+                <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors last:border-b-0">
+                  <td className="px-4 py-3 text-gray-900">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.has(index)}
+                      onChange={() => handleSelectRow(index)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.date}</td>
+                  <td className="px-4 py-3">
+                    <Link href={`/sales/invoice/${transaction.id}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
+                      {transaction.invoiceNo}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.refNo}</td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.buyerName}</td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.country}</td>
+                  <td className="px-4 py-3 text-blue-600">{transaction.airwayBill}</td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.logistics}</td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.sbRef}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium">{transaction.value}</td>
+                  <td className="px-4 py-3 text-gray-900">{transaction.payment}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {transactionData.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="px-3 py-8 text-center text-gray-500">
-                      No sales transactions found
-                    </td>
-                  </tr>
-                ) : (
-                  transactionData.map((transaction) => (
-                    <tr key={transaction.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">
-                        {new Date(transaction.date).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="px-3 py-2 border-r border-gray-200">
-                        <Link href={`/sales/invoice/${transaction.id}`} className="text-blue-600 hover:text-blue-800 cursor-pointer">
-                          {transaction.invoiceNo}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{transaction.refNo}</td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">
-                        <div className="text-sm font-medium">{transaction.buyerName}</div>
-                        <div className="text-xs text-gray-500">{transaction.buyerEmail}</div>
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{transaction.country}</td>
-                      <td className="px-3 py-2 text-blue-600 border-r border-gray-200">{transaction.airwayBill}</td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{transaction.logistics}</td>
-                      <td className="px-3 py-2 text-gray-900 border-r border-gray-200">{transaction.sbRef}</td>
-                      <td className="px-3 py-2 text-gray-900 font-medium border-r border-gray-200">{transaction.value}</td>
-                      <td className="px-3 py-2 text-gray-900">{transaction.payment}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          {/* Bottom Section */}
-          <div className="px-4 py-4 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              {/* Summary Cards */}
-              <div className="flex gap-4">
-                <div className="bg-white px-4 py-2 rounded-full border border-green-300 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">Total</span>
-                    <span className="text-lg font-semibold text-green-600">
-                      {summary.currency} {parseFloat(summary.totalValue.toString()).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="px-4 py-2 rounded-full border border-red-300 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700 text-red-600">Cancelled</span>
-                    <span className="text-lg font-semibold text-red-600">
-                      {summary.currency} {parseFloat(summary.cancelledValue.toString()).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+      {/* Bottom Section */}
+      <div className="px-4 py-4 border-t border-gray-200">
+        <div className="flex justify-between items-center">
+          {/* Summary Cards */}
+          <div className="flex gap-4">
+            <div className="bg-green-100 px-6 py-2 rounded-lg border-2 border-green-600">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-green-600 font-medium">Total</span>
+                <span className="text-base font-semibold text-green-600">₹ {transactionData.reduce((sum, t) => sum + parseFloat(t.value.replace(/[^\d.]/g, '') || '0'), 0).toFixed(2)}</span>
               </div>
-
-              {/* Pagination */}
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 text-sm rounded ${
-                      currentPage === page
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                
-                <button 
-                  onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
-                  className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                  disabled={currentPage === pagination.totalPages}
-                >
-                  Next
-                </button>
+            </div>
+            <div className="bg-red-100 px-6 py-2 rounded-lg border-2 border-red-600">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-red-600 font-medium">Cancelled</span>
+                <span className="text-base font-semibold text-red-600">₹ {transactionData.filter((t: any) => t.status === 'cancelled').reduce((sum, t) => sum + parseFloat(t.value.replace(/[^\d.]/g, '') || '0'), 0).toFixed(2)}</span>
               </div>
             </div>
           </div>
-        </>
-      )}
+
+          {/* Pagination */}
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            
+            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 text-sm rounded ${
+                  currentPage === page
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            
+            <button 
+              onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+              className="px-3 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              disabled={currentPage === pagination.totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
