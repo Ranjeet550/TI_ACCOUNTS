@@ -103,8 +103,12 @@ axiosInstance.interceptors.response.use(
     };
 
     if (error.response) {
-      // Decrypt error response only if encryption is enabled
-      if (!isEncryptionDisabled() && error.response.data && (error.response.data as any).data && typeof (error.response.data as any).data === 'string') {
+      // Check if response is JSON before attempting decryption
+      const contentType = error.response.headers['content-type'];
+      const isJsonResponse = contentType && contentType.includes('application/json');
+
+      // Decrypt error response only if encryption is enabled and response is JSON
+      if (isJsonResponse && !isEncryptionDisabled() && error.response.data && (error.response.data as any).data && typeof (error.response.data as any).data === 'string') {
         const decrypted = decrypt((error.response.data as any).data);
         if (decrypted) error.response.data = decrypted;
       }
