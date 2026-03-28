@@ -22,6 +22,8 @@ interface SalesTransaction {
   status: string;
   invoiceDate?: string;
   paymentStatus: string;
+  total?: number;
+  discount?: number;
 }
 
 export default function SalesPage() {
@@ -34,6 +36,7 @@ export default function SalesPage() {
   const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
   const [transactionData, setTransactionData] = useState<SalesTransaction[]>([]);
   const [pagination, setPagination] = useState({ totalPages: 1 });
+  const [summary, setSummary] = useState({ totalAmount: 0, cancelledAmount: 0 });
 
   useEffect(() => {
     fetchSalesData();
@@ -78,6 +81,10 @@ export default function SalesPage() {
         setTransactionData(response.data.transactions);
         setPagination({
           totalPages: response.data.pagination.totalPages || 1,
+        });
+        setSummary({
+          totalAmount: response.data.summary.totalAmount || 0,
+          cancelledAmount: response.data.summary.cancelledAmount || 0,
         });
       } else {
         setTransactionData([]);
@@ -228,6 +235,7 @@ export default function SalesPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Logistics</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">SB Ref #</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Amount (INR)</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Payment</th>
               </tr>
             </thead>
@@ -255,6 +263,13 @@ export default function SalesPage() {
                   <td className="px-4 py-3 text-gray-900">{transaction.logistics}</td>
                   <td className="px-4 py-3 text-gray-900">{transaction.sbRef}</td>
                   <td className="px-4 py-3 text-gray-900 font-medium">{transaction.value}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium">
+                    ₹ {(() => {
+                      const total = transaction.total || 0;
+                      const discount = transaction.discount || 0;
+                      return (total - discount).toFixed(2);
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-gray-900">{transaction.payment}</td>
                 </tr>
               ))}
@@ -271,13 +286,13 @@ export default function SalesPage() {
             <div className="bg-green-100 px-6 py-2 rounded-lg border-2 border-green-600">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-green-600 font-medium">Total</span>
-                <span className="text-base font-semibold text-green-600">₹ {transactionData.reduce((sum, t) => sum + parseFloat(t.value.replace(/[^\d.]/g, '') || '0'), 0).toFixed(2)}</span>
+                <span className="text-base font-semibold text-green-600">₹ {summary.totalAmount.toFixed(2)}</span>
               </div>
             </div>
             <div className="bg-red-100 px-6 py-2 rounded-lg border-2 border-red-600">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-red-600 font-medium">Cancelled</span>
-                <span className="text-base font-semibold text-red-600">₹ {transactionData.filter((t: any) => t.status === 'cancelled').reduce((sum, t) => sum + parseFloat(t.value.replace(/[^\d.]/g, '') || '0'), 0).toFixed(2)}</span>
+                <span className="text-base font-semibold text-red-600">₹ {summary.cancelledAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

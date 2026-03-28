@@ -96,6 +96,8 @@ export interface SalesTransaction {
   status: string;
   invoiceDate?: string;
   paymentStatus: string;
+  total?: number;
+  discount?: number;
 }
 
 export interface PurchaseTransaction {
@@ -135,6 +137,8 @@ export interface SalesResponse {
       totalValue: number;
       cancelledValue: number;
       currency: string;
+      totalAmount: number;
+      cancelledAmount: number;
     };
   };
 }
